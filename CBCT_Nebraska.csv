@@ -1,0 +1,52 @@
+timestamp,practice_location,practice_size,digital_radiograph_sensors, CBCT_abundance ,cbct_interpretation,scans_for_others,limited_field_cbct,refer_for_cbct,referral_location
+26:12.3,Suburban,less than or equal to 3,Yes,No,,,,No,
+23:36.5,Suburban,less than or equal to 3,Yes,Yes,other,No,Yes,,
+29:53.4,Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,,
+32:41.5,Rural,one,No,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+35:16.3,Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,,
+50:59.7,Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,,
+57:17.4,Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+10:47.0,Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+15:39.3,Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,Yes,Yes,,
+31:17.9,Urban,one,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+40:07.9,Urban,one,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+14:14.0,Suburban,less than or equal to 5,Yes,Yes,I read my own CBCT scans,No,No,,
+44:04.7,Suburban,less than or equal to 3,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+29:07.6,Rural,one,Yes,Yes,I read my own CBCT scans,Yes,Yes,,
+14:52.8,Urban,one,Yes,Yes,other,No,Yes,,
+31:28.7,Rural,one,Yes,No,,,,Yes,Another general dentist with a CBCT
+07:31.4,Rural,less than or equal to 3,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+33:21.1,Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+15:22.2,Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+02:45.0,Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+27:11.8,Suburban,less than or equal to 5,Yes,Yes,other,No,Yes,,
+06:54.6,Rural,one,Yes,Yes,Send them to an Oral radiologist,No,Yes,,
+25:52.5,Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+46:17.4,Rural,greater than 5,Yes,Yes,I read my own CBCT scans,No,Yes,,
+35:16.9,Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+34:28.3,Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+17:13.4,Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+31:12.3,Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,,
+32:12.8,Urban,one,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+32:55.3,Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,,
+45:38.9,Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+35:00.6,Urban,one,Yes,No,,,,Yes,Another general dentist with a CBCT
+52:29.4,Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+36:35.6,Urban,one,Yes,Yes,other,No,Yes,,
+45:16.5,Suburban,one,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+39:10.1,Rural,one,No,Yes,I read my own CBCT scans,Yes,Yes,,
+29:05.2,Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+33:12.5,Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+37:03.1,Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,,
+44:39.4,Rural,less than or equal to 3,Yes,Yes,Send them to an Oral Surgeon,No,Yes,,
+32:23.4,Rural,one,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+33:14.1,Urban,less than or equal to 3,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+33:45.5,Urban,less than or equal to 3,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+03:18.9,Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,,
+28:06.1,Suburban,less than or equal to 3,Yes,No,,,,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+23:56.6,Suburban,less than or equal to 3,Yes,Yes,other,No,Yes,,
+24:33.3,Rural,one,Yes,Yes,Send them to an Oral radiologist,No,Yes,,
+56:19.1,Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,,
+36:41.6,Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,,
+42:18.3,Urban,less than or equal to 3,Yes,No,,,,Yes,Another general dentist with a CBCT
+54:52.3,Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,,

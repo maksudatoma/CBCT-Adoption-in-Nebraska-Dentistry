@@ -1,0 +1,539 @@
+---
+title: "CBCT Use Among General Dentists in Nebraska"
+authors: 
+  Maksuda Toma,
+date: today
+date-format: long
+execute: 
+  echo: false
+  warning: false
+format:
+  pdf: 
+    fig-align: center
+    fig-width: 6
+    fig-height: 4
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+# Introduction
+
+This analysis investigates the use and distribution of Cone Beam Computed Tomography (CBCT) in general dental practices in Nebraska. The goals include evaluating CBCT prevalence, its association with practice characteristics, and identifying referral patterns and factors influencing CBCT adoption.
+
+## Dataset Structure
+
+This dataset contains responses from 51 general dental practices in Nebraska, collected via a survey. The primary focus is to assess the availability and usage of Cone Beam Computed Tomography (CBCT) technology in routine dental practice.
+
+**Key Variables**
+cbct_abundance: Indicates whether the practice owns a CBCT unit (Yes/No) — target variable.
+
+practice_location: Urban, Suburban, or Rural classification of the dental office.
+
+practice_size: Number of general dentists working in the practice.
+
+digital_radiograph_sensors: Whether the practice uses digital radiograph sensors (Yes/No).
+
+cbct_interpretation: How CBCT scans are interpreted (self-read, referred out, etc.) — applicable only to those with CBCT.
+
+scans_for_others: Whether the practice performs scans for other dentists.
+
+limited_field_cbct: If the CBCT machine allows limited field-of-view scans.
+
+refer_for_cbct: For practices without CBCT, whether they refer patients for scans.
+
+referral_location: Whom they refer patients to, if applicable.
+
+```{r}
+# | echo: false
+# Load necessary libraries
+library(tidyverse)
+library(janitor)
+library(ggthemes)
+library(scales)
+library(broom)
+library(vcd)
+
+# Load the data
+data<- read.csv("CBCT_Nebraska.csv")
+```
+
+
+
+# Data Cleaning
+
+The observed missingness in fields such as cbct_interpretation and limited_fov_cbct is structural. These fields are conditionally inapplicable for respondents who indicated not having a CBCT machine. Hence, they are not treated as missing for imputation or analysis.
+To address structural missingness in the dataset, blank responses in follow-up CBCT-related questions were recoded as "Not Applicable" only for clinics that reported not having a CBCT machine (CBCT_abundance == "No"). These blanks were identified as empty strings rather than true NA values. After cleaning, the timestamp column was removed for analysis.
+
+
+```{r}
+# | echo: false
+data_clean <- data %>%
+  mutate(
+    cbct_interpretation = ifelse(CBCT_abundance == "No" & trimws(cbct_interpretation) == "",
+                                 "Not Applicable", cbct_interpretation),
+    scans_for_others = ifelse(CBCT_abundance == "No" & trimws(scans_for_others) == "",
+                              "Not Applicable", scans_for_others),
+    limited_field_cbct = ifelse(CBCT_abundance == "No" & trimws(limited_field_cbct) == "",
+                                "Not Applicable", limited_field_cbct),
+    refer_for_cbct = ifelse(CBCT_abundance == "No" & trimws(refer_for_cbct) == "",
+                            "Not Applicable", refer_for_cbct)
+  )
+# Drop 'timestamp' column
+df <- data_clean %>% select(-timestamp)
+
+# Clean column names for easier referencing
+df <- df %>% clean_names()
+```
+
+
+# Exploratory Data Analysis (EDA)
+In this section we will show some Exploratory Analysis that will help us to understand data structure and relevant relationship among the variables
+
+## CBCT Ownership Prevalence
+The bar chart displays the distribution of CBCT ownership among general dental practices in Nebraska — the primary outcome of interest in this study. A substantial 70.6% of surveyed practices reported owning a CBCT unit, while 29.4% do not.
+
+This indicates that the majority of general practices in the sample have adopted CBCT technology, suggesting relatively widespread access. The remaining 29.4% represent a critical group for understanding barriers to adoption, such as practice size, location, or resource availability.
+
+```{r}
+# | echo: false
+# Frequency table
+tabyl(df$cbct_abundance) %>% adorn_pct_formatting()
+
+# Bar plot with percentages
+df %>%
+  count(cbct_abundance) %>%
+  mutate(percentage = n / sum(n) * 100) %>%
+  ggplot(aes(x = cbct_abundance, y = percentage)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), vjust = -0.1, size = 5) +
+  labs(title = "CBCT Ownership in Dental Practices",
+       x = "Has CBCT?",
+       y = "Percentage") +
+  theme_minimal()
+```
+
+Among the 29.4% of dental practices that do not own a CBCT unit, most are located in either urban or rural areas and are operated by a solo dentist or a small team (≤3 dentists). Urban solo practices make up the largest subgroup (4 out of 15 non-owners), while suburban practices without CBCT primarily consist of small teams. Across all locations, non-ownership of CBCT appears concentrated in smaller practices, regardless of geography. This pattern reinforces the idea that number of dentists and location may be  barriers to CBCT adoption
+
+```{r,, fig.pos="H"}
+# | echo: false
+library(kableExtra)
+library(knitr)
+
+# Filter practices without CBCT
+df_no_cbct <- df %>% filter(cbct_abundance == "No")
+
+# Count by location and practice size
+no_cbct_summary <- df_no_cbct %>%
+  count(practice_location, practice_size) %>%
+  arrange(desc(n))
+
+# Display in kable table
+no_cbct_summary %>%
+  kable(format = "latex", booktabs = TRUE, caption = "Practice Location and Size Among CBCT Non-Owners")
+
+
+
+ggplot(df_no_cbct, aes(x = practice_location, fill = practice_size)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Practice Location & Size Among CBCT Non-Owners",
+       x = "Practice Location",
+       y = "Count",
+       fill = "Practice Size") +
+  theme_minimal()
+
+```
+
+
+## Descriptive Summary Table
+
+This summary table highlights three foundational characteristics of dental practices in the dataset. These factors — location, size, and use of digital radiographs — were chosen as key predictors of CBCT ownership based on theoretical relevance and data completeness. They reflect the structural and technological capacity of a practice and are thus ideal for inclusion in predictive modeling.
+
+*Practice Location:* The majority of practices are in rural (47.1%) or urban (37.3%) areas, with fewer in suburban locations.
+
+*Practice Size:* Over half of the practices are solo-operated, and about 39% have 2–3 dentists, suggesting mostly small to mid-size practices.
+
+*Digital Radiograph Sensors:* A vast majority (96.1%) of practices use digital radiography, indicating a high level of digital tech readiness.
+
+```{r}
+# | echo: false
+library(tidyverse)
+library(janitor)
+library(knitr)
+library(kableExtra)
+
+# Helper function to generate table
+get_summary <- function(var, var_label) {
+  df %>%
+    count({{ var }}) %>%
+    mutate(
+      percentage = round(n / sum(n) * 100, 1),
+      variable = var_label
+    ) %>%
+    rename(level = {{ var }})
+}
+
+# Create individual summaries
+location <- get_summary(practice_location, "Practice Location")
+size <- get_summary(practice_size, "Practice Size")
+radiograph <- get_summary(digital_radiograph_sensors, "Digital Radiograph")
+
+# Combine
+summary_table <- bind_rows(location, size, radiograph)
+
+# Format for display (replace duplicate variable names with "")
+summary_table <- summary_table %>%
+  group_by(variable) %>%
+  mutate(variable = ifelse(row_number() == 1, variable, "")) %>%
+  ungroup()
+
+# Show table with kable
+summary_table %>%
+  select(variable, level, n, percentage) %>%
+  kable(format = "latex", caption = "Descriptive Summary Table") %>%
+  kable_styling(full_width = FALSE, position = "left")
+
+```
+
+
+### Digital Radiograph Availability
+
+The pie chart reveals that 96.1% of the surveyed dental practices use digital radiograph sensors, with only 3.9% still relying on non-digital methods. This high prevalence of digital radiography suggests that most practices are already equipped with foundational digital imaging technologies, which may ease the transition toward adopting more advanced systems like CBCT.
+
+```{r}
+# | echo: false
+# Load required libraries
+library(tidyverse)
+library(patchwork)
+
+# PIE CHART: Digital Radiograph with % inside slices
+plot1 <- df %>%
+  count(digital_radiograph_sensors) %>%
+  mutate(percentage = n / sum(n) * 100,
+         label = paste0(round(percentage, 1), "%")) %>%
+  ggplot(aes(x = "", y = percentage, fill = digital_radiograph_sensors)) +
+  geom_col(width = 1) +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label), position = position_stack(vjust = 0.5), size = 5) +
+  labs(title = "Digital Radiograph Availability", fill = "Response") +
+  theme_void()
+plot1
+```
+
+### Practice Location Distribution
+According to the bar chart, 47.1% of dental practices are located in rural areas, followed by 37.3% in urban areas, and 15.7% in suburban locations. This distribution highlights the prominence of rural and urban practices in the sample, and it provides important context when interpreting CBCT ownership trends and access to diagnostic technology across geographic settings.
+
+```{r}
+# | echo: false
+# BAR CHART: Practice Location with % labels
+plot2 <- df %>%
+  count(practice_location) %>%
+  mutate(percentage = n / sum(n) * 100) %>%
+  ggplot(aes(x = reorder(practice_location, -percentage), y = percentage)) +
+  geom_col(fill = "steelblue") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), vjust = -0.1) +
+  labs(title = "Practice Location", x = "Location", y = "Percentage") +
+  theme_minimal()
+plot2
+```
+
+### Practice Size Breakdown
+The majority of practices are relatively small, with 54.9% being solo-operated and another 39.2% having 2–3 general dentists. Only a small fraction of practices are larger, with 3.9% having up to five dentists and just 2% reporting more than five. This size distribution suggests that most practices may face resource limitations that could impact their ability to adopt high-cost imaging technologies like CBCT.
+
+```{r}
+# | echo: false
+# BAR CHART: Practice Size with % labels
+plot3 <- df %>%
+  count(practice_size) %>%
+  mutate(percentage = n / sum(n) * 100) %>%
+  ggplot(aes(x = reorder(practice_size, -percentage), y = percentage)) +
+  geom_col(fill = "darkgreen") +
+  geom_text(aes(label = paste0(round(percentage, 1), "%")), vjust = -0.1) +
+  labs(title = "Practice Size", x = "Size", y = "Percentage") +
+  theme_minimal()
+plot3
+```
+
+### CBCT Ownership by Practice Characteristics
+
+The following plots display the proportion of CBCT ownership across different levels of practice size and practice location. Each bar represents the distribution of practices with and without CBCT within that category.
+
+The first plot shows the proportion of CBCT ownership by practice size. Practices with more than five dentists or those categorized as having “less than or equal to 5” show 100% ownership, while ownership drops for smaller practices. Among solo practices and those with three or fewer dentists, approximately 30–40% do not own CBCT units, indicating that smaller practices are less likely to adopt the technology—possibly due to cost, space, or workload constraints.
+
+The second plot illustrates CBCT ownership by practice location. CBCT adoption appears highest in rural areas, where about 80% of practices own a CBCT unit. In contrast, suburban areas show only 50% ownership, and urban practices fall in between. This suggests that rural practices may rely more on in-house CBCT due to fewer referral options, while suburban and urban practices may have easier access to external imaging services, reducing the need for ownership.
+
+```{r}
+# | echo: false
+
+par(mfrow =(c(1,2)))
+
+ggplot(df, aes(x = practice_size, fill = cbct_abundance)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(title = "CBCT Ownership by Practice Size",
+       x = "Practice Size",
+       y = "Proportion") +
+  theme_minimal()
+
+ggplot(df, aes(x = practice_location, fill = cbct_abundance)) +
+  geom_bar(position = "fill") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(title = "CBCT Ownership by Practice Location",
+       x = "Practice Location",
+       y = "Proportion") +
+  theme_minimal()
+
+```
+
+
+# CBCT-Related Practice Patterns
+
+Out of the 51 surveyed practices, 70.6% reported owning a CBCT unit. Among these CBCT users, the majority (77.8%) indicated they interpret their own CBCT scans, suggesting high confidence and integration of CBCT into their clinical workflows. A smaller proportion refer images to an oral radiologist (5.6%) or oral surgeon (2.8%), while 13.9% report other interpretation strategies.
+
+When asked if they scan for other dentists, only 8.3% of CBCT owners provide scans for outside practices, while 91.7% use CBCT exclusively for their own patients. This suggests that most CBCT units are used in-house rather than as a shared resource.
+
+Additionally, 97.2% of CBCT owners have machines with limited field-of-view capabilities, indicating preference or prioritization of compact, diagnostic imaging tailored to smaller anatomical regions.
+
+Among the 29.4% of practices that do not own CBCT, a large majority (93.3%) reported referring patients to other facilities for scans. This shows that while non-ownership does not eliminate access to CBCT, it likely introduces external dependencies and potential workflow delays.
+
+```{r}
+# | echo: false
+# Load libraries
+library(tidyverse)
+library(janitor)
+library(knitr)
+library(kableExtra)
+
+# Filter by CBCT status
+df_yes <- df %>% filter(cbct_abundance == "Yes")
+df_no <- df %>% filter(cbct_abundance == "No")
+
+# Flow summaries with additional "Refer for CBCT" info
+flow_summary <- bind_rows(
+  df %>% count(cbct_abundance) %>% 
+    mutate(percentage = round(100 * n / sum(n), 1),
+           variable = "Having CBCT") %>%
+    rename(level = cbct_abundance),
+
+  df_yes %>% count(cbct_interpretation) %>%
+    mutate(percentage = round(100 * n / sum(n), 1),
+           variable = "CBCT Interpretation") %>%
+    rename(level = cbct_interpretation),
+
+  df_yes %>% count(scans_for_others) %>%
+    mutate(percentage = round(100 * n / sum(n), 1),
+           variable = "Scans for Others") %>%
+    rename(level = scans_for_others),
+
+  df_yes %>% count(limited_field_cbct) %>%
+    mutate(percentage = round(100 * n / sum(n), 1),
+           variable = "Limited Field View Scan") %>%
+    rename(level = limited_field_cbct),
+
+  df_no %>% count(refer_for_cbct) %>%
+    mutate(percentage = round(100 * n / sum(n), 1),
+           variable = "Refer for CBCT (Among No CBCT)") %>%
+    rename(level = refer_for_cbct)
+)
+
+# Format table
+flow_summary <- flow_summary %>%
+  select(variable, level, n, percentage) %>%
+  group_by(variable) %>%
+  mutate(variable = ifelse(row_number() == 1, variable, "")) %>%
+  ungroup()
+
+# Display with kable
+flow_summary %>%
+  kable(format = "latex", caption = "CBCT Flowchart Summary Table (Extended)") %>%
+  kable_styling(full_width = FALSE, position = "left")
+
+```
+
+## CBCT Ownership Flowchart 
+
+The flowchart illustrates the decision pathways and practice patterns associated with CBCT ownership among surveyed dental practices. It begins with 70.6% of practices reporting ownership of a CBCT unit, while 29.4% do not. Among those who own CBCT, 77.8% read their own scans, whereas others refer to an oral radiologist (5.6%), an oral surgeon (2.8%), or use other methods (13.9%). Regarding collaboration, 91.7% do not scan for other dentists, and only 8.3% do. Additionally, 97.2% of CBCT owners report having limited-field view capability, suggesting a preference for compact or focused imaging systems.
+
+For the 29.4% without CBCT, the flowchart shows that 93.3% refer patients out for CBCT scans, while 6.7% do not, potentially indicating limited access or need. Overall, the flowchart provides a clear, visual summary of how practices integrate or navigate CBCT use in their clinical workflow.
+
+```{r}
+# | echo: false
+library(DiagrammeR)
+
+grViz("
+digraph cbct_flowchart {
+  graph [layout = dot, rankdir = TB]
+  node [shape = box, style=rounded, fontname = Helvetica]
+
+  # Main CBCT ownership
+  A [label = 'Having CBCT']
+  B1 [label = 'Yes\\n70.6%']
+  B2 [label = 'No\\n29.4%']
+
+  # Yes branch breakdown
+  C [label = 'CBCT Interpretation\\n77.8%']
+  D1 [label = 'Read own\\n77.8%']
+  D2 [label = 'Oral Radiologist\\n5.6%']
+  D3 [label = 'Oral Surgeon\\n2.8%']
+  D4 [label = 'Other\\n13.9%']
+
+  E [label = 'Limited-field view scan\\n97.2%']
+  E1 [label = 'Yes\\n97.2%']
+  E2 [label = 'No\\n2.8%']
+
+  F [label = 'Scan for others']
+  F1 [label = 'Yes\\n8.3%']
+  F2 [label = 'No\\n91.7%']
+
+  # No branch breakdown: Refer for CBCT
+  G [label = 'Refer for CBCT']
+  G1 [label = 'Yes\\n86.7%']
+  G2 [label = 'No\\n13.3%']
+
+  # Main paths
+  A -> B1
+  A -> B2
+
+  # Yes branch
+  B1 -> C
+  B1 -> E
+  B1 -> F
+
+  C -> D1
+  C -> D2
+  C -> D3
+  C -> D4
+
+  E -> E1
+  E -> E2
+
+  F -> F1
+  F -> F2
+
+  # No branch
+  B2 -> G
+  G -> G1
+  G -> G2
+}
+")
+
+```
+
+# Model
+
+To better understand the factors associated with CBCT adoption in general dental practices, we developed predictive models using CBCT ownership (cbct_abundance) as the response variable. Based on the exploratory data analysis and theoretical relevance, three key practice-level predictors were selected: practice location, practice size, and digital radiograph availability. These variables reflect geographic context, clinical capacity, and technological readiness—factors that may influence a practice's ability or decision to invest in CBCT technology.
+
+To explore the factors associated with CBCT adoption among general dental practices, we began by conducting Pearson’s Chi-square tests of independence to assess the bivariate relationships between CBCT ownership (cbct_abundance) and selected practice characteristics. These initial tests provided insight into whether practice location, size, and digital radiograph availability were significantly associated with owning CBCT.
+
+Building on these findings, we developed predictive models using logistic regression, decision tree, and random forest approaches. Each model used practice location, practice size, and digital radiograph sensors as predictors. These models allow us to evaluate both statistical associations and predictive strength in explaining CBCT ownership across practices.
+
+## Pearson’s Chisquare
+
+The Pearson's Chi-square tests were used to evaluate whether CBCT ownership is associated with practice characteristics. None of the variables tested showed a statistically significant association at the 0.05 level:
+
+*Practice Location* had a p-value of 0.1342, suggesting a possible trend but not a strong association with CBCT ownership.
+*Practice Size* yielded a p-value of 0.6684, indicating no meaningful relationship.
+*Digital Radiograph* Availability showed a p-value of 1, meaning CBCT ownership is not associated with whether a practice has digital radiograph equipment.
+
+*[Note: All tests showed a warning that "Chi-squared approximation may be incorrect." This is likely due to small cell counts in the contingency tables. In such cases, I tried with Fisher’s Exact Test and it also gave same result]*
+
+```{r}
+# | echo: false
+# Make sure all predictors are factors
+df <- df %>%
+  mutate(across(c(cbct_abundance, practice_location, practice_size, digital_radiograph_sensors), as.factor))
+
+# Chi-square tests for association with CBCT ownership
+chisq.test(table(df$cbct_abundance, df$practice_location))
+chisq.test(table(df$cbct_abundance, df$practice_size))
+chisq.test(table(df$cbct_abundance, df$digital_radiograph_sensors))
+
+```
+
+## Logistic Regression
+
+A logistic regression model was used to explore whether a dental practice’s location, size, or use of digital radiographs could predict whether they own a CBCT machine. Among these factors, the most notable finding was that practices located in suburban areas were significantly less likely to own a CBCT compared to those in rural areas. Practices in urban areas also showed a lower likelihood of owning CBCT, but this result wasn’t strong enough to be considered statistically significant. This suggests that rural practices may rely more heavily on in-house CBCT technology, possibly due to limited access to referral imaging services.
+
+For other factors like practice size and use of digital radiography, no clear associations were found. While practices using digital radiographs appeared slightly more likely to have CBCT, the evidence was not strong enough to rule out chance. Practice size had unstable results, likely because of very small numbers in certain size categories, making it hard to detect meaningful trends. Overall, the model suggests that location may play a role in CBCT ownership, but more data would be needed to draw stronger conclusions about size or digital readiness.
+
+```{r}
+# | echo: false
+# Create binary response
+df <- df %>%
+  mutate(has_cbct = ifelse(cbct_abundance == "Yes", 1, 0))
+
+# Fit logistic regression model
+model_cbct <- glm(has_cbct ~ practice_location + practice_size + digital_radiograph_sensors,
+                  data = df, family = binomial)
+
+# Summary
+summary(model_cbct)
+
+```
+### Interpretation of Odds Ratios 
+
+The table above presents the odds ratios and 95% confidence intervals from the logistic regression model predicting CBCT ownership. The most notable and statistically significant finding is that **suburban practices were approximately 92% less likely** to own a CBCT machine than rural practices (OR = 0.077, *p* = 0.024). This suggests that suburban practices may face greater barriers or have less demand for CBCT technology compared to rural settings.
+
+For **urban practices**, the odds of owning CBCT were lower than rural as well (OR = 0.282), but this association was not statistically significant (*p* = 0.108). While **digital radiograph use** appeared to increase the odds of owning CBCT by over 5 times (OR = 5.709), this effect was also **not statistically significant** (*p* = 0.265), possibly due to limited variation in this variable.
+
+The results related to **practice size** should be viewed with caution. Some categories had very few practices in them, which made the model produce unreliable estimates — either extremely large numbers or odds close to zero. This happens when the data doesn’t have enough variation in certain groups to make a stable comparison. Because of this, we can’t draw firm conclusions about how practice size affects CBCT ownership. To improve the analysis, it may be helpful to combine some of the practice size categories so there are enough responses in each group.
+
+```{r}
+# | echo: false
+# Get odds ratios and confidence intervals
+library(broom)
+exp_coef <- tidy(model_cbct, exponentiate = TRUE, conf.int = TRUE)
+
+# Create a detailed odds ratio table
+exp_coef %>%
+  select(term, estimate, std.error, statistic, conf.low, conf.high, p.value) %>%
+  kable(format = "latex", digits = 3,
+        caption = "Odds Ratios and 95% Confidence Intervals for Predicting CBCT Ownership") %>%
+  kable_styling(full_width = FALSE, position = "left")
+
+
+```
+
+**Interpretation**
+
+The odds ratio plot illustrates how each predictor relates to the likelihood of CBCT ownership, with wide confidence intervals indicating varying degrees of uncertainty. While digital radiograph use appears to increase the odds of CBCT ownership (OR ≈ 5.7), the effect is not statistically significant. Suburban and urban locations show lower odds compared to rural practices, with suburban practices having a statistically significant reduction in ownership likelihood, though confidence intervals suggest cautious interpretation. Estimates for practice size are highly unstable, likely due to small group sizes, making it difficult to draw reliable conclusions from those categories.
+
+```{r}
+# | echo: false
+# Load libraries
+library(broom)
+library(ggplot2)
+
+# Get odds ratios and confidence intervals
+exp_coef <- tidy(model_cbct, exponentiate = TRUE, conf.int = TRUE)
+
+# Remove intercept
+exp_coef_plot <- exp_coef %>%
+  filter(term != "(Intercept)")
+
+# Plot
+ggplot(exp_coef_plot, aes(x = term, y = estimate)) +
+  geom_point(size = 3, color = "steelblue") +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, color = "gray40") +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
+  coord_flip() +
+  labs(title = "Odds Ratios for Predicting CBCT Ownership",
+       x = "Predictor",
+       y = "Odds Ratio (with 95% CI)") +
+  theme_minimal()
+
+```
+
+# Conclusion 
+
+This study explored factors associated with the adoption of Cone Beam Computed Tomography (CBCT) among general dental practices in Nebraska. The majority of practices (70.6%) reported owning a CBCT machine, and digital radiograph usage was very high (96.1%), indicating overall technological readiness in the sample. However, practices located in **suburban areas** were significantly **less likely to own CBCT** than rural counterparts, even after accounting for size and digital readiness. 
+
+Other variables, including practice size and digital radiograph usage, showed suggestive but statistically inconclusive associations, likely due to small sample sizes or imbalanced category distributions. Logistic regression and Pierson's Chi tests consistently highlighted limitations in model stability, especially for practice size, which exhibited quasi-complete separation and unreliable estimates.
+
+# Recommendations
+
+To improve the accuracy and usefulness of future studies, we recommend a few practical steps. First, some of the practice size groups had very few responses, which made it hard to compare results. Grouping similar practice sizes together would help make the findings more reliable. Second, increasing the number of dental offices surveyed would give a better overall picture and allow for stronger comparisons between different types of practices.
+
+We also found that suburban practices were less likely to have CBCT machines, so it may be helpful to focus support or outreach efforts in those areas to encourage adoption. Finally, hearing directly from dentists—through interviews or open-ended questions—could provide valuable context about why they do or do not use CBCT in their practice. While this study offers helpful insights, a larger and more balanced dataset would allow for even stronger conclusions in the future.
+
+

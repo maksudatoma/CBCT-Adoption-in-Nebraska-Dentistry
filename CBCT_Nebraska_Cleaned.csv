@@ -1,0 +1,52 @@
+practice_location,practice_size,digital_radiograph_sensors,CBCT_abundance,cbct_interpretation,scans_for_others,limited_field_cbct,refer_for_cbct,referral_location
+Suburban,less than or equal to 3,Yes,No,I read my own CBCT scans,No,Yes,No,Not Applicable
+Suburban,less than or equal to 3,Yes,Yes,other,No,Yes,No,Not Applicable
+Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,one,No,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,Yes,Yes,No,Not Applicable
+Urban,one,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Urban,one,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Suburban,less than or equal to 5,Yes,Yes,I read my own CBCT scans,No,No,No,Not Applicable
+Suburban,less than or equal to 3,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Rural,one,Yes,Yes,I read my own CBCT scans,Yes,Yes,No,Not Applicable
+Urban,one,Yes,Yes,other,No,Yes,No,Not Applicable
+Rural,one,Yes,No,I read my own CBCT scans,No,Yes,Yes,Another general dentist with a CBCT
+Rural,less than or equal to 3,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Suburban,less than or equal to 5,Yes,Yes,other,No,Yes,No,Not Applicable
+Rural,one,Yes,Yes,Send them to an Oral radiologist,No,Yes,No,Not Applicable
+Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,greater than 5,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,one,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,one,Yes,No,I read my own CBCT scans,No,Yes,Yes,Another general dentist with a CBCT
+Urban,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,one,Yes,Yes,other,No,Yes,No,Not Applicable
+Suburban,one,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Rural,one,No,Yes,I read my own CBCT scans,Yes,Yes,No,Not Applicable
+Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,less than or equal to 3,Yes,Yes,Send them to an Oral Surgeon,No,Yes,No,Not Applicable
+Rural,one,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Urban,less than or equal to 3,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Urban,less than or equal to 3,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Urban,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Suburban,less than or equal to 3,Yes,No,I read my own CBCT scans,No,Yes,Yes,A specialist with a CBCT such as a oral surgeon or a endodontist
+Suburban,less than or equal to 3,Yes,Yes,other,No,Yes,No,Not Applicable
+Rural,one,Yes,Yes,Send them to an Oral radiologist,No,Yes,No,Not Applicable
+Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Rural,one,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
+Urban,less than or equal to 3,Yes,No,I read my own CBCT scans,No,Yes,Yes,Another general dentist with a CBCT
+Rural,less than or equal to 3,Yes,Yes,I read my own CBCT scans,No,Yes,No,Not Applicable
