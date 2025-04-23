@@ -1,7 +1,7 @@
 ---
 title: "CBCT Use Among General Dentists in Nebraska"
 authors: 
-  Maksuda Toma,
+  Maksuda Toma
 date: today
 date-format: long
 execute: 
@@ -26,6 +26,7 @@ This analysis investigates the use and distribution of Cone Beam Computed Tomogr
 This dataset contains responses from 51 general dental practices in Nebraska, collected via a survey. The primary focus is to assess the availability and usage of Cone Beam Computed Tomography (CBCT) technology in routine dental practice.
 
 **Key Variables**
+
 cbct_abundance: Indicates whether the practice owns a CBCT unit (Yes/No) — target variable.
 
 practice_location: Urban, Suburban, or Rural classification of the dental office.
@@ -262,26 +263,36 @@ The first plot shows the proportion of CBCT ownership by practice size. Practice
 
 The second plot illustrates CBCT ownership by practice location. CBCT adoption appears highest in rural areas, where about 80% of practices own a CBCT unit. In contrast, suburban areas show only 50% ownership, and urban practices fall in between. This suggests that rural practices may rely more on in-house CBCT due to fewer referral options, while suburban and urban practices may have easier access to external imaging services, reducing the need for ownership.
 
-```{r}
-# | echo: false
+```{r,,fig.pos="H"}
+#| label: fig-bar
+#| echo: false
+#| eval: true
+#| fig-cap: "CBCT Ownership by Practice Size and Location"
+#| fig-width: 6
+#| fig-height: 4
 
-par(mfrow =(c(1,2)))
+library(ggplot2)
+library(scales)
 
+# Chart 1: CBCT Ownership by Practice Size
 ggplot(df, aes(x = practice_size, fill = cbct_abundance)) +
   geom_bar(position = "fill") +
-  scale_y_continuous(labels = scales::percent_format()) +
+  scale_y_continuous(labels = percent_format()) +
   labs(title = "CBCT Ownership by Practice Size",
        x = "Practice Size",
        y = "Proportion") +
-  theme_minimal()
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
+# Chart 2: CBCT Ownership by Practice Location
 ggplot(df, aes(x = practice_location, fill = cbct_abundance)) +
   geom_bar(position = "fill") +
-  scale_y_continuous(labels = scales::percent_format()) +
+  scale_y_continuous(labels = percent_format()) +
   labs(title = "CBCT Ownership by Practice Location",
        x = "Practice Location",
        y = "Proportion") +
-  theme_minimal()
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
 ```
 
@@ -431,8 +442,8 @@ Building on these findings, we developed predictive models using logistic regres
 
 The Pearson's Chi-square tests were used to evaluate whether CBCT ownership is associated with practice characteristics. None of the variables tested showed a statistically significant association at the 0.05 level:
 
-*Practice Location* had a p-value of 0.1342, suggesting a possible trend but not a strong association with CBCT ownership.
-*Practice Size* yielded a p-value of 0.6684, indicating no meaningful relationship.
+*Practice Location* had a p-value of 0.1599, suggesting a possible trend but not a strong association with CBCT ownership.
+*Practice Size* yielded a p-value of 0.7036, indicating no meaningful relationship.
 *Digital Radiograph* Availability showed a p-value of 1, meaning CBCT ownership is not associated with whether a practice has digital radiograph equipment.
 
 *[Note: All tests showed a warning that "Chi-squared approximation may be incorrect." This is likely due to small cell counts in the contingency tables. In such cases, I tried with Fisher’s Exact Test and it also gave same result]*
@@ -443,10 +454,12 @@ The Pearson's Chi-square tests were used to evaluate whether CBCT ownership is a
 df <- df %>%
   mutate(across(c(cbct_abundance, practice_location, practice_size, digital_radiograph_sensors), as.factor))
 
-# Chi-square tests for association with CBCT ownership
-chisq.test(table(df$cbct_abundance, df$practice_location))
-chisq.test(table(df$cbct_abundance, df$practice_size))
-chisq.test(table(df$cbct_abundance, df$digital_radiograph_sensors))
+# Chi-square tests using Monte Carlo simulation for p-values
+chisq.test(table(df$cbct_abundance, df$practice_location), simulate.p.value = TRUE)
+
+chisq.test(table(df$cbct_abundance, df$practice_size), simulate.p.value = TRUE)
+
+chisq.test(table(df$cbct_abundance, df$digital_radiograph_sensors), simulate.p.value = TRUE)
 
 ```
 
@@ -470,19 +483,36 @@ model_cbct <- glm(has_cbct ~ practice_location + practice_size + digital_radiogr
 summary(model_cbct)
 
 ```
+
+### Considering practice size in two groups
+
+*[Note: We noticed that some practice size categories had very few responses — in some cases, only one or none. This made it difficult for the model to estimate how practice size affects CBCT ownership. To solve this, we combined the size categories into just two groups: solo practices (with one dentist) and group practices (with two or more dentists). This simplification helped the model run properly and made the results more stable and easier to interpret]*
+
+The model suggests that practice location plays the most important role in predicting CBCT ownership. Suburban practices were much less likely to have CBCT compared to rural ones, and urban practices also showed lower ownership, though with more uncertainty. Practice size (solo vs. group) and use of digital radiographs did not show strong or statistically significant effects, though practices using digital radiography appeared somewhat more likely to have CBCT. Overall, the results point to location as the clearest influencing factor, while other characteristics may still be relevant but require more data to draw firm conclusions.
+
+**[Note: Using this model for your final report is better for interpretability and model stability]**
+
+```{r}
+df <- df %>%
+  mutate(
+    practice_size_simple = ifelse(practice_size == "one", "solo", "group"),
+    practice_size_simple = factor(practice_size_simple)
+  )
+model_cbct_simple <- glm(cbct_abundance ~ practice_location + practice_size_simple + digital_radiograph_sensors,
+                         data = df, family = binomial)
+summary(model_cbct_simple)
+
+```
+
+
 ### Interpretation of Odds Ratios 
 
-The table above presents the odds ratios and 95% confidence intervals from the logistic regression model predicting CBCT ownership. The most notable and statistically significant finding is that **suburban practices were approximately 92% less likely** to own a CBCT machine than rural practices (OR = 0.077, *p* = 0.024). This suggests that suburban practices may face greater barriers or have less demand for CBCT technology compared to rural settings.
-
-For **urban practices**, the odds of owning CBCT were lower than rural as well (OR = 0.282), but this association was not statistically significant (*p* = 0.108). While **digital radiograph use** appeared to increase the odds of owning CBCT by over 5 times (OR = 5.709), this effect was also **not statistically significant** (*p* = 0.265), possibly due to limited variation in this variable.
-
-The results related to **practice size** should be viewed with caution. Some categories had very few practices in them, which made the model produce unreliable estimates — either extremely large numbers or odds close to zero. This happens when the data doesn’t have enough variation in certain groups to make a stable comparison. Because of this, we can’t draw firm conclusions about how practice size affects CBCT ownership. To improve the analysis, it may be helpful to combine some of the practice size categories so there are enough responses in each group.
-
+This table summarizes how different factors—such as practice location, practice size, and use of digital radiograph sensors—relate to the likelihood of owning a CBCT machine. The results suggest that suburban and urban practices may be less likely to own CBCT compared to rural ones, with the suburban effect being nearly statistically significant (p = 0.052). Digital radiograph users appear more likely to own CBCT, but the confidence interval is very wide, indicating uncertainty due to limited or unbalanced data. Practice size (solo vs. group) showed no significant association. Overall, while some trends are visible, none of the predictors are statistically significant at the conventional 0.05 level, and large confidence intervals indicate that the model results should be interpreted with caution—possibly due to the small sample size 
 ```{r}
 # | echo: false
 # Get odds ratios and confidence intervals
 library(broom)
-exp_coef <- tidy(model_cbct, exponentiate = TRUE, conf.int = TRUE)
+exp_coef <- tidy(model_cbct_simple, exponentiate = TRUE, conf.int = TRUE)
 
 # Create a detailed odds ratio table
 exp_coef %>%
@@ -491,38 +521,77 @@ exp_coef %>%
         caption = "Odds Ratios and 95% Confidence Intervals for Predicting CBCT Ownership") %>%
   kable_styling(full_width = FALSE, position = "left")
 
-
 ```
 
-**Interpretation**
 
-The odds ratio plot illustrates how each predictor relates to the likelihood of CBCT ownership, with wide confidence intervals indicating varying degrees of uncertainty. While digital radiograph use appears to increase the odds of CBCT ownership (OR ≈ 5.7), the effect is not statistically significant. Suburban and urban locations show lower odds compared to rural practices, with suburban practices having a statistically significant reduction in ownership likelihood, though confidence intervals suggest cautious interpretation. Estimates for practice size are highly unstable, likely due to small group sizes, making it difficult to draw reliable conclusions from those categories.
+### Odds Ratios
+The following three charts help us understand how different practice characteristics are related to whether a dental office owns a CBCT machine. These charts show odds ratios, which tell us how likely a practice is to own CBCT depending on factors like location, digital tools, or number of dentists. The red vertical line at 1 means "no difference" — if a dot is far from this line, it may suggest a stronger relationship, but we also look at the lines (called confidence intervals) to judge how precise those estimates are.
 
-```{r}
-# | echo: false
-# Load libraries
-library(broom)
+*Practice Location*
+
+This chart shows how location affects CBCT ownership, comparing Urban and Suburban clinics to Rural ones (the baseline group).Suburban practices appear less likely to have CBCT compared to rural offices, and this result is fairly consistent and statistically meaningful.
+Urban practices also tend to have lower CBCT ownership than rural ones, but the result is less certain.
+Overall, rural practices are most likely to have CBCT, which might reflect differences in patient volume, access to radiology referrals, or funding.
+
+*Digital Radiograph Use*
+
+Here we compare clinics that use digital radiographs to those that don’t. The chart suggests that clinics with digital radiography are more likely to own CBCT.
+However, there’s a lot of uncertainty in the estimate — the line around the dot is very wide — so we can’t be confident that the pattern is real.
+This means while digital-ready clinics seem more likely to invest in CBCT, we’d need more data to be sure.
+
+*Practice Size*
+
+This chart compares solo practitioners to group practices. Solo clinics seem slightly less likely to have CBCT, but the difference is very small and uncertain.
+The confidence line is wide, which tells us the result could go either way.
+This suggests that practice size alone isn’t a strong predictor in this sample, though solo dentists might face more resource barriers.
+
+```{r,,fig.pos="H"}
+#| echo: false
+#| eval: true
+#| fig-width: 6
+#| fig-height: 4
 library(ggplot2)
+library(dplyr)
+library(broom)
 
-# Get odds ratios and confidence intervals
-exp_coef <- tidy(model_cbct, exponentiate = TRUE, conf.int = TRUE)
+# Tidy model output, exponentiate for odds ratios
+exp_coef_simple <- tidy(model_cbct_simple, exponentiate = TRUE, conf.int = TRUE)
 
-# Remove intercept
-exp_coef_plot <- exp_coef %>%
-  filter(term != "(Intercept)")
 
-# Plot
-ggplot(exp_coef_plot, aes(x = term, y = estimate)) +
-  geom_point(size = 3, color = "steelblue") +
-  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, color = "gray40") +
-  geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
-  coord_flip() +
-  labs(title = "Odds Ratios for Predicting CBCT Ownership",
-       x = "Predictor",
-       y = "Odds Ratio (with 95% CI)") +
-  theme_minimal()
+# Cleaned odds ratio data (excluding intercept)
+exp_coef_clean <- exp_coef_simple %>%
+  filter(term != "(Intercept)") %>%
+  mutate(group = case_when(
+    grepl("practice_location", term) ~ "Practice Location",
+    grepl("digital_radiograph_sensors", term) ~ "Digital Radiograph",
+    grepl("practice_size", term) ~ "Practice Size"
+  ))
+
+# Plotting function
+plot_odds_group <- function(data, group_name) {
+  ggplot(data %>% filter(group == group_name), aes(x = term, y = estimate)) +
+    geom_point(size = 3, color = "steelblue") +
+    geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.2, color = "gray40") +
+    geom_hline(yintercept = 1, linetype = "dashed", color = "red") +
+    coord_flip() +
+    labs(title = paste("Odds Ratios:", group_name),
+         x = NULL,
+         y = "Odds Ratio (95% CI)") +
+    theme_minimal()
+}
+
+# Generate individual plots
+plot_location <- plot_odds_group(exp_coef_clean, "Practice Location")
+plot_radiograph <- plot_odds_group(exp_coef_clean, "Digital Radiograph")
+plot_size <- plot_odds_group(exp_coef_clean, "Practice Size")
+
+# Print (in RMarkdown/Quarto, you'd wrap each in a chunk)
+print(plot_location)
+print(plot_radiograph)
+print(plot_size)
 
 ```
+
 
 # Conclusion 
 
